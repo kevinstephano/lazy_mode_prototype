@@ -1,5 +1,8 @@
 #pragma once
 
+#include <ATen/Tensor.h>
+#include <torch/library.h>
+
 namespace lazy_mode {
 
 struct LazyNativeFunctions {
