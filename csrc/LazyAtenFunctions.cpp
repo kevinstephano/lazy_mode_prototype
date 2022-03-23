@@ -1,8 +1,10 @@
 #include "LazyAtenFunctions.h"
+#include "instrumentation.h"
 #include <iostream>
 
 namespace lazy_mode {
 at::Tensor LazyNativeFunctions::mm(const at::Tensor & self, const at::Tensor & mat2) {
+    LAZY_PERF_SCOPE("LazyNativeFunctions::mm");
     /*    
     if (force_eager_fallback(at::aten::mm)) {
         return at::native::call_fallback_fn<&ltc_eager_fallback, ATEN_OP(mm)>::call(
@@ -26,11 +28,11 @@ at::Tensor LazyNativeFunctions::mm(const at::Tensor & self, const at::Tensor & m
     auto result = torch::lazy::CreateAtenFromLtcTensor(
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     */
-    std::cout << "Execute MM" << std::endl;
     return at::Tensor();
 };
 
 at::Tensor LazyNativeFunctions::relu(const at::Tensor & self) {
+    LAZY_PERF_SCOPE("LazyNativeFunctions::relu");
     /* 
     if (force_eager_fallback(at::aten::relu)) {
         return at::native::call_fallback_fn<&ltc_eager_fallback, ATEN_OP(relu)>::call(
@@ -56,6 +58,7 @@ at::Tensor LazyNativeFunctions::relu(const at::Tensor & self) {
 };
 
 at::Tensor LazyNativeFunctions::add(const at::Tensor & self, const at::Tensor & other, const at::Scalar & alpha) {
+    LAZY_PERF_SCOPE("LazyNativeFunctions::add");
     /* 
     if (force_eager_fallback(at::aten::add)) {
         return at::native::call_fallback_fn<&ltc_eager_fallback, ATEN_OP2(add, Tensor)>::call(
