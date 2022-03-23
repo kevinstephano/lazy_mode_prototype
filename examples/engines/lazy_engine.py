@@ -36,7 +36,6 @@ def train_loop(args, model, optim_func, input_func, grad_func=None) :
                                 loss = model(*batch)
  
     
-    ltm.wait_device_ops()
     stop_evt.record()
     stop_evt.synchronize()
     return start_evt.elapsed_time(stop_evt)

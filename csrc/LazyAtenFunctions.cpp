@@ -28,7 +28,7 @@ at::Tensor LazyNativeFunctions::mm(const at::Tensor & self, const at::Tensor & m
     auto result = torch::lazy::CreateAtenFromLtcTensor(
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     */
-    return at::Tensor();
+    return self.clone();
 };
 
 at::Tensor LazyNativeFunctions::relu(const at::Tensor & self) {
@@ -54,7 +54,7 @@ at::Tensor LazyNativeFunctions::relu(const at::Tensor & self) {
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     return result;
     */
-    return at::Tensor();
+    return self.clone();
 };
 
 at::Tensor LazyNativeFunctions::add(const at::Tensor & self, const at::Tensor & other, const at::Scalar & alpha) {
@@ -85,6 +85,36 @@ at::Tensor LazyNativeFunctions::add(const at::Tensor & self, const at::Tensor & 
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     return result;
     */
-    return at::Tensor();
+    return self.clone();
+};
+at::Tensor& LazyNativeFunctions::add_out(const at::Tensor & self, const at::Tensor & other, const at::Scalar & alpha, at::Tensor& out) {
+    LAZY_PERF_SCOPE("LazyNativeFunctions::add_out");
+    /* 
+    if (force_eager_fallback(at::aten::add)) {
+        return at::native::call_fallback_fn<&ltc_eager_fallback, ATEN_OP2(add, Tensor)>::call(
+            self,
+            other,
+            alpha
+        );
+    }
+
+    TORCH_LAZY_FN_COUNTER("lazy::");
+    auto common_device = torch::lazy::GetBackendDevice(self, other);
+    TORCH_INTERNAL_ASSERT(common_device);
+    
+    torch::lazy::LazyTensorPtr lazy_self = torch::lazy::GetLtcTensorOrCreateForWrappedNumber(self, *common_device);
+    torch::lazy::LazyTensorPtr lazy_other = torch::lazy::GetLtcTensorOrCreateForWrappedNumber(other, *common_device);
+    auto out_meta = at::meta::add(self, other, alpha);
+    std::vector<Shape> shapes{Shape(out_meta.scalar_type(), out_meta.sizes().vec())};
+    TORCH_INTERNAL_ASSERT(shapes.size() == 1);
+    auto node = torch::lazy::MakeNode<ir::ops::AddTensor>(lazy_self->GetIrValue(),
+                          lazy_other->GetIrValue(),
+                          torch::lazy::LazyGraphExecutor::Get()->GetIrValueForScalarFromCodegen(alpha),
+                                                                                  std::move(shapes));
+    auto result = torch::lazy::CreateAtenFromLtcTensor(
+            torch::lazy::LazyTensor::Create(std::move(node), *common_device));
+    return result;
+    */
+    return out;
 };
 } // namespace lazy_mode
