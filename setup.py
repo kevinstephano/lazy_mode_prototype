@@ -140,7 +140,7 @@ setup(
     packages=find_packages(exclude=['build']),
     ext_modules=[
         CppExtension(
-            '_lazy',
+            '_LAZY',
             torch_lazy_sources,
             include_dirs=include_dirs,
             extra_compile_args=extra_compile_args,

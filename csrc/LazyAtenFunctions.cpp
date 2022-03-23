@@ -1,4 +1,5 @@
 #include "LazyAtenFunctions.h"
+#include <iostream>
 
 namespace lazy_mode {
 at::Tensor LazyNativeFunctions::mm(const at::Tensor & self, const at::Tensor & mat2) {
@@ -25,6 +26,7 @@ at::Tensor LazyNativeFunctions::mm(const at::Tensor & self, const at::Tensor & m
     auto result = torch::lazy::CreateAtenFromLtcTensor(
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     */
+    std::cout << "Execute MM" << std::endl;
     return at::Tensor();
 };
 

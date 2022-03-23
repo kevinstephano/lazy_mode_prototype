@@ -20,9 +20,7 @@ def run(sys_argv, model, optim_func, input_func, grad_func) :
     parser.add_argument('--max_fp16_perf', default=False, action='store_true', help='Run with only GradScaler with FP16 inputs and FP16 model parameters.')
     parser.add_argument('--grad_scaler', default=False, action='store_true', help='Run with GradScaler when using FP16 inputs.')
     parser.add_argument('--device', default='cuda', type=str, help='Device type.')
-    parser.add_argument('--jit_script', default=False, action='store_true', help='Run with jit.script model.')
-    parser.add_argument('--aot_autograd', default=False, action='store_true', help='Run with AOT Autograd.')
-    parser.add_argument('--ltc', default=False, action='store_true', help='Run with Lazy Tensors.')
+    parser.add_argument('--lazy', default=False, action='store_true', help='Run with Lazy Tensors.')
     parser.add_argument('--profile_with_nvtx', default=False, action='store_true', help='Enable NVTX markers when profiling.')
     parser.add_argument('--skip_eager', default=False, action='store_true', help='Skip the Eager Mode comparison.')
     parser.add_argument('--inference', default=False, action='store_true', help='Run inference.')
@@ -46,21 +44,12 @@ def run(sys_argv, model, optim_func, input_func, grad_func) :
         args.model_dtype = torch.float16
         args.grad_scaler = True
 
-    # EDIT ARGUMENTS: for Lazy Tensor Core usage
-    if args.ltc :
-        os.environ["LTC_TS_CUDA"] = '1'
     #########################################################
 
     tests = []
-    if args.jit_script :
-        from engines import jit_script_engine
-        tests.append(("JIT_Script", jit_script_engine))
-    if args.aot_autograd :
-        from engines import aot_autograd_engine
-        tests.append(("AOT_Autograd", aot_autograd_engine))
-    if args.ltc :
-        from engines import ltc_engine
-        tests.append(("LTC", ltc_engine))
+    if args.lazy :
+        from engines import lazy_engine
+        tests.append(("LAZY", lazy_engine))
    
     # Run eager mode first
     eager_time = 0.0
@@ -77,8 +66,6 @@ def run(sys_argv, model, optim_func, input_func, grad_func) :
         torch.cuda.manual_seed(args.seed)
         torch.random.manual_seed(args.seed)
         prev_device = args.device
-        if name == "LTC" :
-            args.device = 'lazy'
         test_times.append((name, engine.train_loop(args, model, optim_func, input_func, grad_func) / args.steps * 1000.0))
         args.device = prev_device
         
