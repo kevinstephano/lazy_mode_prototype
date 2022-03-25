@@ -1,5 +1,7 @@
 #include "LazyAtenFunctions.h"
 #include "instrumentation.h"
+#include "graph_manager.h"
+
 #include <iostream>
 
 namespace lazy_mode {
@@ -28,6 +30,7 @@ at::Tensor LazyNativeFunctions::mm(const at::Tensor & self, const at::Tensor & m
     auto result = torch::lazy::CreateAtenFromLtcTensor(
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     */
+    auto &gm = GraphManager::GetSingleton();
     return self.clone();
 };
 
