@@ -1,6 +1,7 @@
 #include "LazyAtenFunctions.h"
 #include "instrumentation.h"
 #include "graph_manager.h"
+#include "ATen/Functions.h"
 
 #include <iostream>
 
@@ -31,7 +32,12 @@ at::Tensor LazyNativeFunctions::mm(const at::Tensor & self, const at::Tensor & m
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     */
     auto &gm = GraphManager::GetSingleton();
-    return self.clone();
+    auto self_ts_value = gm.getTsValue(self);
+
+    auto return_tensor = at::empty_like(self);
+    auto return_value = gm.getTsValue(return_tensor);
+
+    return return_tensor;
 };
 
 at::Tensor LazyNativeFunctions::relu(const at::Tensor & self) {
@@ -57,7 +63,12 @@ at::Tensor LazyNativeFunctions::relu(const at::Tensor & self) {
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     return result;
     */
-    return self.clone();
+    auto &gm = GraphManager::GetSingleton();
+    auto self_ts_value = gm.getTsValue(self);
+
+    auto return_tensor = at::empty_like(self);
+    auto return_value = gm.getTsValue(return_tensor);
+    return return_tensor;
 };
 
 at::Tensor LazyNativeFunctions::add(const at::Tensor & self, const at::Tensor & other, const at::Scalar & alpha) {
@@ -88,7 +99,12 @@ at::Tensor LazyNativeFunctions::add(const at::Tensor & self, const at::Tensor & 
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     return result;
     */
-    return self.clone();
+    auto &gm = GraphManager::GetSingleton();
+    auto self_ts_value = gm.getTsValue(self);
+
+    auto return_tensor = at::empty_like(self);
+    auto return_value = gm.getTsValue(return_tensor);
+    return return_tensor;
 };
 at::Tensor& LazyNativeFunctions::add_out(const at::Tensor & self, const at::Tensor & other, const at::Scalar & alpha, at::Tensor& out) {
     LAZY_PERF_SCOPE("LazyNativeFunctions::add_out");
@@ -118,6 +134,11 @@ at::Tensor& LazyNativeFunctions::add_out(const at::Tensor & self, const at::Tens
             torch::lazy::LazyTensor::Create(std::move(node), *common_device));
     return result;
     */
-    return out;
+    auto &gm = GraphManager::GetSingleton();
+    auto self_ts_value = gm.getTsValue(self);
+
+    auto return_tensor = at::empty_like(self);
+    auto return_value = gm.getTsValue(return_tensor);
+    return return_tensor;
 };
 } // namespace lazy_mode
