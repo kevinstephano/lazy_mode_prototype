@@ -28,10 +28,13 @@ class GraphManager {
       return singleton;
     }
 
+    torch::jit::Value* getTsValue(at::Tensor& aten_tensor);
+    void setTsValue(at::Tensor& aten_tenosr, torch::jit::Value* ts_value);
+
   private:
     std::string func_name_;
     std::unordered_map<std::string, torch::jit::GraphExecutor> ts_graph_exec_cache_;
-    //std::unordered_map<at::Tensor, torch::jit::Value> tensor_to_ir_value_map;
+    std::unordered_map<c10::TensorImpl*, torch::jit::Value*> tensor_to_value_map_;
 
     std::shared_ptr<torch::jit::Graph> ts_graph_;
     std::shared_ptr<torch::jit::GraphFunction> ts_graph_function_;
