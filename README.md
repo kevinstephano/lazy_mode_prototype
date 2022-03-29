@@ -13,5 +13,5 @@ python examples/simple_model.py --lazy --inference
 
 ## Trace Lazy Aten Functions
 ```
-PYTORCH_LAZY_TRACE=trace_file python examples/simple_model.py --lazy --inference
+PYTORCH_LAZY_TRACE=trace_file python examples/simple_model.py --skip_eager --lazy --inference
 ```
