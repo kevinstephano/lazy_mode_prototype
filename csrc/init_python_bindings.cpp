@@ -1,5 +1,6 @@
 #include <torch/extension.h>
 #include <pybind11/pybind11.h>
+#include "graph_manager.h"
 
 namespace lazy_mode {
 
@@ -15,6 +16,9 @@ void InitPythonBindings(py::module m) {
     c10::impl::tls_set_dispatch_key_excluded(c10::DispatchKey::AutogradCUDA, false);
     c10::impl::tls_set_dispatch_key_included(c10::DispatchKey::Lazy, false);
     c10::impl::tls_set_dispatch_key_included(c10::DispatchKey::AutogradLazy, false);
+    auto &gm = GraphManager::GetSingleton();
+    gm.print();
+    gm.resetGraph();
   });
 }
 

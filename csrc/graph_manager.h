@@ -27,11 +27,18 @@ class GraphManager {
     static GraphManager& GetSingleton() {
       LAZY_PERF_SCOPE("GraphManager::GetSingleton");
       static GraphManager singleton;
+
+      singleton.createGraph();
       return singleton;
     }
 
     torch::jit::Value* getTsValue(const at::Tensor& aten_tensor);
     void setTsValue(const at::Tensor& aten_tenosr, torch::jit::Value* ts_value);
+
+    void createGraph();
+    void resetGraph();
+
+    void print() const;
 
   private:
     std::string func_name_;
