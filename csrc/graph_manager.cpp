@@ -1,5 +1,7 @@
 #include "graph_manager.h"
 #include <torch/csrc/jit/frontend/sugared_value.h>
+#include <torch/csrc/jit/passes/canonicalize.h>
+#include <torch/csrc/jit/runtime/graph_executor.h>
 #include <ATen/Functions.h>
 #include <ATen/core/Tensor.h>
 #include <iostream>
@@ -43,6 +45,8 @@ void GraphManager::resetTsGraph() {
     ts_graph_.reset();
     ts_graph_function_.reset();
     tensor_to_value_map_.clear();
+    graph_inputs_.clear();
+    graph_outputs_.clear();
   }
 }
 
@@ -55,7 +59,6 @@ torch::jit::Value* GraphManager::makeTsNode(c10::Symbol sym, const std::vector<t
   auto ret = magic_method->call({}, *ts_graph_function_, args, {}, 0);
   auto sv = dynamic_cast<torch::jit::SimpleValue*>(ret.get());
   TORCH_CHECK(sv, "SimpleValue* pointer doesn't exist!");
-  //TORCH_CHECK(sv->getValue()->type()->kind() == c10::TypeKind::TupleType, "Tuples are not supported!");
   if (sv->getValue()->type()->kind() == c10::TypeKind::TupleType) {
     const auto tuple_call_result = sv->asTuple({}, *ts_graph_function_);
     std::vector<torch::jit::Value*> tuple_result;
@@ -73,6 +76,9 @@ torch::jit::Value* GraphManager::makeTsNode(c10::Symbol sym, const std::vector<t
 
 void GraphManager::executeTsGraph() {
   LAZY_PERF_SCOPE("GraphManager::executeTsGraph");
+
+  // Establishing the order of outputs for the TS Graph and adding
+  // them to the graph.
   for (const auto& entry : tensor_to_value_map_) {
     if (!entry.second->hasUses()) {
       ts_graph_->registerOutput(entry.second);
@@ -81,6 +87,29 @@ void GraphManager::executeTsGraph() {
   }
   printTsGraph();
 
+  // Get Graph Executor (possibly from cache)
+  auto graph_hash = torch::jit::Canonicalize(ts_graph_, false)->toString(false);
+  if (ts_graph_exec_cache_.count(graph_hash) == 0) {
+    ts_graph_exec_cache_[graph_hash] = torch::jit::GraphExecutor(ts_graph_, "");
+  }
+  auto &graph_exec = ts_graph_exec_cache_[graph_hash];
+
+  // Execute Graph
+  std::vector<torch::jit::IValue> stack;
+  for (auto &input : graph_inputs_) {
+    stack.emplace_back(input);
+  }
+  std::cout << "Input size of stack: " << stack.size() << std::endl;
+  graph_exec.run(stack);
+  std::cout << "Result size of stack: " << stack.size() << std::endl;
+
+  // Set Traced Output Tensors to TS Output Tensor Storage
+  // This is potentially very unsafe!! For example purposes only!
+  for (auto idx : c10::irange(stack.size())) {
+    at::Tensor &output = stack[idx].toTensor();
+    TORCH_CHECK(output.defined(), "Tensor Impl is not defined!");
+    graph_outputs_[idx]->set_storage_keep_dtype(output.unsafeGetTensorImpl()->storage());
+  }
 }
 
 void GraphManager::printTsGraph() const {
