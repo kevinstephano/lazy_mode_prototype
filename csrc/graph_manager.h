@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <vector>
 #include <torch/csrc/api/include/torch/jit.h>
 #include <c10/util/intrusive_ptr.h>
 #include "instrumentation.h"
@@ -38,8 +39,10 @@ class GraphManager {
     void createTsGraph();
     void resetTsGraph();
 
-    torch::jit::Value* makeTsNode(c10::Symbol symbol, 
+    torch::jit::Value* makeTsNode(c10::Symbol sym, 
                                   const std::vector<torch::jit::NamedValue>& args);
+
+    void executeTsGraph();
 
     void printTsGraph() const;
 
@@ -50,6 +53,9 @@ class GraphManager {
 
     std::shared_ptr<torch::jit::Graph> ts_graph_;
     std::shared_ptr<torch::jit::GraphFunction> ts_graph_function_;
+
+    std::vector<at::Tensor> graph_inputs_;
+    std::vector<c10::intrusive_ptr<at::TensorImpl, at::UndefinedTensorImpl>> graph_outputs_;
 };
 
 } // nameespace lazy_mode

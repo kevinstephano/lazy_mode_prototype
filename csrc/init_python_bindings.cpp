@@ -17,7 +17,7 @@ void InitPythonBindings(py::module m) {
     c10::impl::tls_set_dispatch_key_included(c10::DispatchKey::Lazy, false);
     c10::impl::tls_set_dispatch_key_included(c10::DispatchKey::AutogradLazy, false);
     auto &gm = GraphManager::GetSingleton();
-    gm.printTsGraph();
+    gm.executeTsGraph();
     gm.resetTsGraph();
   });
 }

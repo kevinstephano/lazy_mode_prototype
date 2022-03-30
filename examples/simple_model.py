@@ -21,8 +21,7 @@ class TestModule(torch.nn.Module) :
     def forward(self, inputs) :
         out1 = torch.mm(inputs, self.weights)
         out2 = self.act(out1)
-        out3 = out2 * inputs
-        return out3
+        return torch.sqrt(out2)
 
 if __name__ == "__main__" :
     runner.run(sys.argv, TestModule(), optim_func, input_func, grad_func) 
