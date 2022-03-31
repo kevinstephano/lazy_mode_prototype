@@ -4,6 +4,7 @@
 #include <torch/csrc/jit/runtime/graph_executor.h>
 #include <ATen/Functions.h>
 #include <ATen/core/Tensor.h>
+#include <torch/csrc/autograd/profiler.h>
 #include <iostream>
 
 namespace lazy_mode {
@@ -76,7 +77,7 @@ torch::jit::Value* GraphManager::makeTsNode(c10::Symbol sym, const std::vector<t
 
 void GraphManager::executeTsGraph() {
   LAZY_PERF_SCOPE("GraphManager::executeTsGraph");
-
+  torch::profiler::impl::cudaStubs()->nvtxRangePushA("Pre-TorchScript Executor Work");
   // Establishing the order of outputs for the TS Graph and adding
   // them to the graph.
   for (const auto& entry : tensor_to_value_map_) {
@@ -85,7 +86,7 @@ void GraphManager::executeTsGraph() {
       graph_outputs_.push_back(entry.first);
     }
   }
-  printTsGraph();
+  //printTsGraph();
 
   // Get Graph Executor (possibly from cache)
   auto graph_hash = torch::jit::Canonicalize(ts_graph_, false)->toString(false);
@@ -99,17 +100,21 @@ void GraphManager::executeTsGraph() {
   for (auto &input : graph_inputs_) {
     stack.emplace_back(input);
   }
-  std::cout << "Input size of stack: " << stack.size() << std::endl;
+  torch::profiler::impl::cudaStubs()->nvtxRangePop();
+
+  //std::cout << "Input size of stack: " << stack.size() << std::endl;
   graph_exec.run(stack);
-  std::cout << "Result size of stack: " << stack.size() << std::endl;
+  //std::cout << "Result size of stack: " << stack.size() << std::endl;
 
   // Set Traced Output Tensors to TS Output Tensor Storage
   // This is potentially very unsafe!! For example purposes only!
+  torch::profiler::impl::cudaStubs()->nvtxRangePushA("Post-TorchScript Executor Work (set storage)");
   for (auto idx : c10::irange(stack.size())) {
     at::Tensor &output = stack[idx].toTensor();
     TORCH_CHECK(output.defined(), "Tensor Impl is not defined!");
     graph_outputs_[idx]->set_storage_keep_dtype(output.unsafeGetTensorImpl()->storage());
   }
+  torch::profiler::impl::cudaStubs()->nvtxRangePop();
 }
 
 void GraphManager::printTsGraph() const {
